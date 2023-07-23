@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  dialog-app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    entrypoint: /usr/bin/dialogs
+    restart: on-failure
+    environment:
+      - PGHOST=master
+      - PGPORT=5432
+      - MIGR_DIR=/usr/bin/migrations
+      # можно указать мастера в качестве слэйва если не настроена репликация и не поднимать еще два контейнера с БД
+      #- SLAVE_HOST_PORT=db:5432
+      - SLAVE_HOST_PORT=tarantool_master:3301,tarantool_slave:3301
+      - TARANTOOL_HOST=tarantool_master
+      - TARANTOOL_USER=user
+      - TARANTOOL_PASSWORD=password
+    ports:
+      - "8080-8085:8080"
+    depends_on:
+      - master
+      - tarantool_master
+  tarantool:
+    build:
+      dockerfile: tarantool/Dockerfile
+      context: .
+    image: tarantool/tarantool:2.11.0
+    restart: always
+    environment:
+      - TARANTOOL_USER_NAME=user
+      - TARANTOOL_USER_PASSWORD=password
+    ports:
+      - "3301:3301"
+  master:
+    container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
+    image: "citusdata/citus:11.3.0"
+    ports: [ "${COORDINATOR_EXTERNAL_PORT:-5432}:5432" ]
+    labels: [ "com.citusdata.role=Master" ]
+    environment: &AUTH
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      PGUSER: "${POSTGRES_USER:-postgres}"
+      PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
+  worker:
+    image: "citusdata/citus:11.3.0"
+    labels: [ "com.citusdata.role=Worker" ]
+    deploy:
+      replicas: 2
+    depends_on: [ manager ]
+    environment: *AUTH
+    command: "/wait-for-manager.sh"
+    volumes:
+      - healthcheck-volume:/healthcheck
+  manager:
+    container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
+    image: "citusdata/membership-manager:0.3.0"
+    volumes:
+      - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"
+      - healthcheck-volume:/healthcheck
+    depends_on: [ master ]
+    environment: *AUTH
+volumes:
+  healthcheck-volume:
