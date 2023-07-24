@@ -31,7 +31,7 @@ local YIELD_EVERY = 10
 fiber.create(function()
     while true do
         fiber.sleep(YIELD_EVERY)
-        box.space.sessions.index.ttl:pairs(fiber.clock64() - TTL, {iterator = 'LE'})
+        box.space.sessions.index.ttl:pairs(fiber.time64() - TTL, {iterator = 'LE'})
            :each(function (x)
             box.space.sessions:delete(x.id)
         end)
@@ -52,7 +52,7 @@ function create_session(id, userId, token, timestamp)
         return tokenDb
     end
     if timestamp == nil then
-        timestamp = fiber.clock64()
+        timestamp = fiber.time64()
     end
     res = box.space.sessions:insert { id, userId, token, timestamp }
     if res ~= nil then

@@ -8,21 +8,20 @@ services:
     entrypoint: /usr/bin/dialogs
     restart: on-failure
     environment:
+      - PORT=8081
       - PGHOST=master
-      - PGPORT=5432
+      - PGPORT=5433
       - MIGR_DIR=/usr/bin/migrations
-      # можно указать мастера в качестве слэйва если не настроена репликация и не поднимать еще два контейнера с БД
-      #- SLAVE_HOST_PORT=db:5432
-      - SLAVE_HOST_PORT=tarantool_master:3301,tarantool_slave:3301
       - TARANTOOL_HOST=tarantool_master
+      - TARANTOOL_PORT=3303
       - TARANTOOL_USER=user
       - TARANTOOL_PASSWORD=password
     ports:
       - "8080-8085:8080"
     depends_on:
       - master
-      - tarantool_master
-  tarantool:
+      - tarantool-dialog
+  tarantool-dialog:
     build:
       dockerfile: tarantool/Dockerfile
       context: .
@@ -32,11 +31,11 @@ services:
       - TARANTOOL_USER_NAME=user
       - TARANTOOL_USER_PASSWORD=password
     ports:
-      - "3301:3301"
+      - "3303:3301"
   master:
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
+    container_name: "${COMPOSE_PROJECT_NAME:-citus}_master_dialog"
     image: "citusdata/citus:11.3.0"
-    ports: [ "${COORDINATOR_EXTERNAL_PORT:-5432}:5432" ]
+    ports: [ "${COORDINATOR_EXTERNAL_PORT:-5433}:5432" ]
     labels: [ "com.citusdata.role=Master" ]
     environment: &AUTH
       POSTGRES_USER: "${POSTGRES_USER:-postgres}"
@@ -55,7 +54,7 @@ services:
     volumes:
       - healthcheck-volume:/healthcheck
   manager:
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
+    container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager_dialog"
     image: "citusdata/membership-manager:0.3.0"
     volumes:
       - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"

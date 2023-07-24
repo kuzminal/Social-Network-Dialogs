@@ -34,7 +34,8 @@ func main() {
 	)
 
 	r := router.NewRouter(app)
-	log.Fatalln(http.ListenAndServe(":8081", r))
+	appPort := helper.GetEnvValue("PORT", "8081")
+	log.Fatalln(http.ListenAndServe(":"+appPort, r))
 }
 
 func initDb() {
@@ -45,7 +46,7 @@ func initDb() {
 
 func initTarantoolDb() {
 	thost := helper.GetEnvValue("TARANTOOL_HOST", "localhost")
-	tport := "3301" //пока так
+	tport := helper.GetEnvValue("TARANTOOL_PORT", "3301")
 	tuser := helper.GetEnvValue("TARANTOOL_USER_NAME", "user")
 	tpassword := helper.GetEnvValue("TARANTOOL_USER_PASSWORD", "password")
 	tarantoolMaster, _ = tarantool.NewTarantoolMaster(thost, tport, tuser, tpassword)
