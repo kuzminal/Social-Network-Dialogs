@@ -5,6 +5,7 @@ import (
 	"Social-Net-Dialogs/internal/helper"
 	"Social-Net-Dialogs/internal/router"
 	"Social-Net-Dialogs/internal/service"
+	"Social-Net-Dialogs/internal/session"
 	"Social-Net-Dialogs/internal/store/pg"
 	"Social-Net-Dialogs/internal/store/tarantool"
 	"Social-Net-Dialogs/models"
@@ -32,6 +33,8 @@ func main() {
 		connectToWsChan,
 		disconnectToWsChan,
 	)
+	sessionConsumer := session.NewSessionConsumer(tarantoolMaster)
+	go sessionConsumer.ReadSessionInfo(context.Background())
 
 	r := router.NewRouter(app)
 	appPort := helper.GetEnvValue("PORT", "8081")

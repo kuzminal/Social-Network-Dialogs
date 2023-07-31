@@ -46,8 +46,8 @@ type ActiveWsUsers struct {
 }
 
 type UserSession struct {
-	Id        string `json:"id"`
-	UserId    string `json:"userId"`
-	Token     string `json:"token"`
-	CreatedAt uint64 `json:"createdAt"`
+	Id        string `json:"id" msgpack:"Id"`
+	UserId    string `json:"userId" msgpack:"user_id"`
+	Token     string `json:"token" msgpack:"token"`
+	CreatedAt uint64 `json:"createdAt" msgpack:"created_at"`
 }

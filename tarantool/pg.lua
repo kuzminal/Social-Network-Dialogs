@@ -21,6 +21,11 @@ s:create_index('token', {
     type = 'hash',
     parts = { 'token' }
 })
+s:create_index('user', {
+    if_not_exists = true,
+    type = 'hash',
+    parts = { 'user_id' }
+})
 
 local fiber = require('fiber')
 

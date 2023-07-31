@@ -62,7 +62,7 @@ func NewTokenServiceClient(store store.SessionStore) *Client {
 	cwt, _ := context.WithTimeout(context.Background(), time.Second*5)
 	conn, err := grpc.DialContext(cwt, host+":"+port, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	//defer conn.Close()
 
