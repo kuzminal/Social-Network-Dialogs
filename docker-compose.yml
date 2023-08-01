@@ -1,7 +1,12 @@
 version: '3.8'
 
 services:
-  dialog-app:
+  dialog:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dialog.rule=Host(`localhost`)"
+      - "traefik.http.routers.dialog.rule=PathPrefix(`/dialog`)"
+      - "traefik.http.routers.dialog.entrypoints=web"
     build:
       dockerfile: Dockerfile
       context: .
@@ -11,7 +16,7 @@ services:
       - dialog
       - socialnethl_social
     environment:
-      - PORT=8081
+      - PORT=8080
       - PGHOST=master
       - PGPORT=5432
       - MIGR_DIR=/usr/bin/migrations
@@ -20,9 +25,9 @@ services:
       - TARANTOOL_USER=user
       - TARANTOOL_PASSWORD=password
       - KAFKA_BROKER_HOST=kafka
-      - RPC_SERVER_HOST=social-app
+      - RPC_SERVER_HOST=social
     ports:
-      - "8081:8081"
+      - "8082:8080"
     depends_on:
       - master
       - tarantool-dialog
