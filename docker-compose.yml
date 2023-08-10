@@ -33,8 +33,8 @@ services:
       - tarantool-dialog
   tarantool-dialog:
     build:
-      dockerfile: tarantool/Dockerfile
-      context: .
+      dockerfile: Dockerfile
+      context: ./tarantool
     image: tarantool/tarantool:2.11.0
     restart: always
     networks:
