@@ -8,6 +8,7 @@ import (
 	"Social-Net-Dialogs/internal/session"
 	"Social-Net-Dialogs/internal/store/pg"
 	"Social-Net-Dialogs/internal/store/tarantool"
+	"Social-Net-Dialogs/internal/tracing"
 	"Social-Net-Dialogs/models"
 	"context"
 	"fmt"
@@ -23,9 +24,16 @@ var (
 func main() {
 	initDb()
 	initTarantoolDb()
+
+	tracer, err := tracing.TracerProvider("http://trace:16686/api/traces")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer tracer.Shutdown(context.Background())
+
 	connectToWsChan := make(chan models.ActiveWsUsers, 10)
 	disconnectToWsChan := make(chan models.ActiveWsUsers, 10)
-	tokenService := service.NewTokenServiceClient(tarantoolMaster)
+	tokenService := service.NewTokenServiceClient(tarantoolMaster, tracer)
 	app := handler.NewInstance(
 		tarantoolMaster,
 		master,

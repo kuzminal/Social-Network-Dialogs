@@ -6,7 +6,10 @@ import (
 	"Social-Net-Dialogs/models"
 	"Social-Net-Dialogs/pkg/tokenservice"
 	"context"
+	"fmt"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"time"
 )
@@ -14,9 +17,16 @@ import (
 type Client struct {
 	Client       tokenservice.ValidateTokenClient
 	SessionStore store.SessionStore
+	tracer       *trace.TracerProvider
 }
 
 func (c *Client) ValidateToken(ctx context.Context, token string) (*tokenservice.ValidateTokenResponse, error) {
+	ctx, span := c.tracer.Tracer("client").Start(ctx, "Test")
+	defer span.End()
+
+	traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-trace-id", traceId)
+
 	var resp tokenservice.ValidateTokenResponse
 	session, err := c.SessionStore.LoadSession(token)
 	if err != nil {
@@ -55,7 +65,7 @@ func (c *Client) ValidateToken(ctx context.Context, token string) (*tokenservice
 	return validateToken, nil
 }
 
-func NewTokenServiceClient(store store.SessionStore) *Client {
+func NewTokenServiceClient(store store.SessionStore, tracer *trace.TracerProvider) *Client {
 	host := helper.GetEnvValue("RPC_SERVER_HOST", "localhost")
 	port := helper.GetEnvValue("RPC_SERVER_PORT", "50051")
 
@@ -71,5 +81,6 @@ func NewTokenServiceClient(store store.SessionStore) *Client {
 	return &Client{
 		Client:       ts,
 		SessionStore: store,
+		tracer:       tracer,
 	}
 }
