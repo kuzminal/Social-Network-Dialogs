@@ -25,7 +25,7 @@ func main() {
 	initDb()
 	initTarantoolDb()
 
-	tracer, err := tracing.TracerProvider("http://trace:16686/api/traces")
+	tracer, err := tracing.TracerProvider("http://trace:14268/api/traces")
 	if err != nil {
 		log.Fatal(err)
 	}
