@@ -4,9 +4,9 @@ import (
 	"Social-Net-Dialogs/models"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gofrs/uuid"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 	"log"
 	"net/http"
@@ -52,11 +52,23 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
-	ctx, span := i.tracer.Tracer("dialog-service").Start(r.Context(), "GetMessages")
-	defer span.End()
+	// Extract TraceID from header
+	md, _ := metadata.FromIncomingContext(r.Context())
+	traceIdString := md["x-trace-id"][0]
+	// Convert string to byte array
+	traceId, err := trace.TraceIDFromHex(traceIdString)
+	if err != nil {
+		return
+	}
+	// Creating a span context with a predefined trace-id
+	spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: traceId,
+	})
+	// Embedding span config into the context
+	ctx := trace.ContextWithSpanContext(r.Context(), spanContext)
 
-	traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-trace-id", traceId)
+	ctx, span := i.tracer.Tracer("dialog-service").Start(ctx, "GetMessages")
+	defer span.End()
 
 	id := chi.URLParam(r, "user_id")
 	userId := r.Context().Value("userId").(string)
