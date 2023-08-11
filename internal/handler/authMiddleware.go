@@ -11,7 +11,7 @@ import (
 
 func (i *Instance) BasicAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := i.tracer.Tracer("client").Start(r.Context(), "BasicAuth")
+		ctx, span := i.tracer.Tracer("dialog-service").Start(r.Context(), "BasicAuth")
 		defer span.End()
 
 		traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
@@ -24,12 +24,12 @@ func (i *Instance) BasicAuth(next http.Handler) http.Handler {
 			w.Write([]byte("Malformed Token"))
 		} else {
 			token := authHeader[1]
-			user, e := i.tokenService.ValidateToken(context.Background(), token)
+			user, e := i.tokenService.ValidateToken(ctx, token)
 			if e != nil {
 				log.Println(e)
 			}
 			if len(user.UserId) > 0 {
-				ctx := context.WithValue(r.Context(), "userId", user.UserId)
+				ctx := context.WithValue(ctx, "userId", user.UserId)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			} else {

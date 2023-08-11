@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	service     = "trace-demo"
+	service     = "Dialogs"
 	environment = "production"
 	id          = 1
 )

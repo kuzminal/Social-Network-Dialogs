@@ -6,8 +6,8 @@ import (
 	"Social-Net-Dialogs/models"
 	"Social-Net-Dialogs/pkg/tokenservice"
 	"context"
-	"fmt"
-	"go.opentelemetry.io/otel/sdk/trace"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"log"
@@ -17,15 +17,26 @@ import (
 type Client struct {
 	Client       tokenservice.ValidateTokenClient
 	SessionStore store.SessionStore
-	tracer       *trace.TracerProvider
+	tracer       *tracesdk.TracerProvider
 }
 
 func (c *Client) ValidateToken(ctx context.Context, token string) (*tokenservice.ValidateTokenResponse, error) {
-	ctx, span := c.tracer.Tracer("client").Start(ctx, "Test")
-	defer span.End()
+	md, _ := metadata.FromOutgoingContext(ctx)
+	// Convert string to byte array
+	traceIdString := md["x-trace-id"][0]
+	traceId, err := trace.TraceIDFromHex(traceIdString)
+	if err != nil {
+		return nil, err
+	}
+	// Creating a span context with a predefined trace-id
+	spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: traceId,
+	})
+	// Embedding span config into the context
+	ctx = trace.ContextWithSpanContext(ctx, spanContext)
 
-	traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-trace-id", traceId)
+	ctx, span := c.tracer.Tracer("dialog-service").Start(ctx, "ValidateToken")
+	defer span.End()
 
 	var resp tokenservice.ValidateTokenResponse
 	session, err := c.SessionStore.LoadSession(token)
@@ -65,7 +76,7 @@ func (c *Client) ValidateToken(ctx context.Context, token string) (*tokenservice
 	return validateToken, nil
 }
 
-func NewTokenServiceClient(store store.SessionStore, tracer *trace.TracerProvider) *Client {
+func NewTokenServiceClient(store store.SessionStore, tracer *tracesdk.TracerProvider) *Client {
 	host := helper.GetEnvValue("RPC_SERVER_HOST", "localhost")
 	port := helper.GetEnvValue("RPC_SERVER_PORT", "50051")
 
