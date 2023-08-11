@@ -4,8 +4,10 @@ import (
 	"Social-Net-Dialogs/models"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gofrs/uuid"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"net/http"
 	"time"
@@ -50,6 +52,12 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
+	ctx, span := i.tracer.Tracer("dialog-service").Start(r.Context(), "GetMessages")
+	defer span.End()
+
+	traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-trace-id", traceId)
+
 	id := chi.URLParam(r, "user_id")
 	userId := r.Context().Value("userId").(string)
 	if len(userId) == 0 {

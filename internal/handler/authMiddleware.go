@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"net/http"
 	"strings"
@@ -9,6 +11,24 @@ import (
 
 func (i *Instance) BasicAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract TraceID from header
+		md, _ := metadata.FromIncomingContext(r.Context())
+		traceIdString := md["x-trace-id"][0]
+		// Convert string to byte array
+		traceId, err := trace.TraceIDFromHex(traceIdString)
+		if err != nil {
+			return
+		}
+		// Creating a span context with a predefined trace-id
+		spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID: traceId,
+		})
+		// Embedding span config into the context
+		ctx := trace.ContextWithSpanContext(r.Context(), spanContext)
+
+		ctx, span := i.tracer.Tracer("dialog-service").Start(ctx, "BasicAuth")
+		defer span.End()
+
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
 			log.Println("Malformed token")

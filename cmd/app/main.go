@@ -24,8 +24,9 @@ var (
 func main() {
 	initDb()
 	initTarantoolDb()
-
-	tracer, err := tracing.TracerProvider("http://trace:14268/api/traces")
+	traceServer := helper.GetEnvValue("TRACE_SERVER", "trace")
+	tracePort := helper.GetEnvValue("TRACE_PORT", "14268")
+	tracer, err := tracing.TracerProvider(fmt.Sprintf("http://%s:%s/api/traces", traceServer, tracePort))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,6 +41,7 @@ func main() {
 		tokenService,
 		connectToWsChan,
 		disconnectToWsChan,
+		tracer,
 	)
 	sessionConsumer := session.NewSessionConsumer(tarantoolMaster)
 	go sessionConsumer.ReadSessionInfo(context.Background())

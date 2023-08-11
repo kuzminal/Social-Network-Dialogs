@@ -4,6 +4,7 @@ import (
 	"Social-Net-Dialogs/internal/service"
 	"Social-Net-Dialogs/internal/store"
 	"Social-Net-Dialogs/models"
+	"go.opentelemetry.io/otel/sdk/trace"
 )
 
 type Instance struct {
@@ -12,6 +13,7 @@ type Instance struct {
 	tokenService     *service.Client
 	connectToWs      chan models.ActiveWsUsers
 	disconnectFromWs chan models.ActiveWsUsers
+	tracer           *trace.TracerProvider
 }
 
 func NewInstance(
@@ -20,6 +22,7 @@ func NewInstance(
 	tokenService *service.Client,
 	connectToWs chan models.ActiveWsUsers,
 	disconnectFromWs chan models.ActiveWsUsers,
+	tracer *trace.TracerProvider,
 ) *Instance {
 	return &Instance{
 		sessionStore:     sessionStore,
@@ -27,5 +30,6 @@ func NewInstance(
 		tokenService:     tokenService,
 		connectToWs:      connectToWs,
 		disconnectFromWs: disconnectFromWs,
+		tracer:           tracer,
 	}
 }
