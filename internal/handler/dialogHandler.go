@@ -53,7 +53,7 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 
 func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
 	// Extract TraceID from header
-	md, _ := metadata.FromIncomingContext(r.Context())
+	md, _ := metadata.FromOutgoingContext(r.Context())
 	traceIdString := md["x-trace-id"][0]
 	// Convert string to byte array
 	traceId, err := trace.TraceIDFromHex(traceIdString)
