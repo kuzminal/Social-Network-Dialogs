@@ -36,11 +36,6 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 	msg.ToUser = id
 	msg.CreatedAt = time.Now().Format("2006-01-02")
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Bad request body given"))
-		return
-	}
 	msg.ChatId = chatId
 	err = i.dialogueStore.SaveMessage(context.Background(), msg)
 	if err != nil {

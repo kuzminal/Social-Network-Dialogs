@@ -20,7 +20,7 @@ func NewCountersPublisher() Publisher {
 	l := log.New(os.Stdout, "kafka writer: ", 0)
 	w := kafka.Writer{
 		Addr:                   kafka.TCP(brokerHost + ":" + brokerPort),
-		Topic:                  "session",
+		Topic:                  "counters",
 		Logger:                 l,
 		AllowAutoTopicCreation: true,
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgtype"
 	"log"
 )
 
@@ -47,9 +48,9 @@ func (pg *Postgres) GetChatId(ctx context.Context, userFrom string, userTo strin
 }
 
 func (pg *Postgres) SaveMessage(ctx context.Context, msg models.Message) error {
-	query := `INSERT INTO social.messages (id, "text", to_user, from_user, created_at, chat_id) 
-VALUES ($1, $2, $3, $4, $5, $6);`
-	_, err := pg.db.Exec(ctx, query, msg.Id, msg.Text, msg.ToUser, msg.FromUser, msg.CreatedAt, msg.ChatId)
+	query := `INSERT INTO social.messages (id, "text", to_user, from_user, created_at, chat_id, is_read) 
+VALUES ($1, $2, $3, $4, $5, $6, $7);`
+	_, err := pg.db.Exec(ctx, query, msg.Id, msg.Text, msg.ToUser, msg.FromUser, msg.CreatedAt, msg.ChatId, msg.IsRead)
 	if err != nil {
 		return err
 	}
@@ -68,12 +69,14 @@ VALUES ($1, $2, $3);`
 }
 
 func (pg *Postgres) MarkAsRead(ctx context.Context, messageId string) (models.Message, error) {
-	query := `update social.messages set is_read = true where id=$1 RETURNING id, from_user, text, to_user, chat_id, created_at, is_read;`
+	query := `update social.messages set is_read = true where id=$1 RETURNING id, text, from_user, to_user, chat_id, created_at, is_read;`
 	row := pg.db.QueryRow(ctx, query, messageId)
 	var message models.Message
-	err := row.Scan(&message)
+	var createAt pgtype.Timestamp
+	err := row.Scan(&message.Id, &message.Text, &message.FromUser, &message.ToUser, &message.ChatId, &createAt, &message.IsRead)
 	if err != nil && err.Error() == "no rows in result set" {
 		return models.Message{}, err
 	}
+	message.CreatedAt = createAt.Time.Format("2006-01-02")
 	return message, nil
 }
