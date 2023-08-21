@@ -81,12 +81,7 @@ func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	msg, _ := i.dialogueStore.GetMessages(context.Background(), id, userId)
-	var messages []models.Message
-	for _, m := range msg {
-		message, _ := i.dialogueStore.MarkAsRead(ctx, m.Id)
-		messages = append(messages, message)
-	}
-	msgDTO, _ := json.Marshal(messages)
+	msgDTO, _ := json.Marshal(msg)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(msgDTO)
 }
