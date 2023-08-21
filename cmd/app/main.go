@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Social-Net-Dialogs/internal/counters"
 	"Social-Net-Dialogs/internal/handler"
 	"Social-Net-Dialogs/internal/helper"
 	"Social-Net-Dialogs/internal/router"
@@ -35,6 +36,7 @@ func main() {
 	connectToWsChan := make(chan models.ActiveWsUsers, 10)
 	disconnectToWsChan := make(chan models.ActiveWsUsers, 10)
 	tokenService := service.NewTokenServiceClient(tarantoolMaster, tracer)
+	counterPublisher := counters.NewCountersPublisher()
 	app := handler.NewInstance(
 		tarantoolMaster,
 		master,
@@ -42,6 +44,7 @@ func main() {
 		connectToWsChan,
 		disconnectToWsChan,
 		tracer,
+		counterPublisher,
 	)
 	sessionConsumer := session.NewSessionConsumer(tarantoolMaster)
 	go sessionConsumer.ReadSessionInfo(context.Background())

@@ -66,3 +66,14 @@ VALUES ($1, $2, $3);`
 	}
 	return chatId, nil
 }
+
+func (pg *Postgres) MarkAsRead(ctx context.Context, messageId string) (models.Message, error) {
+	query := `update social.messages set is_read = true where id=$1 RETURNING id, from_user, text, to_user, chat_id, created_at, is_read;`
+	row := pg.db.QueryRow(ctx, query, messageId)
+	var message models.Message
+	err := row.Scan(&message)
+	if err != nil && err.Error() == "no rows in result set" {
+		return models.Message{}, err
+	}
+	return message, nil
+}

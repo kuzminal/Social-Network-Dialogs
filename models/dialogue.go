@@ -1,12 +1,13 @@
 package models
 
 type Message struct {
-	Id        string `json:"-"`
-	Text      string `json:"text"`
-	FromUser  string `json:"from"`
-	ToUser    string `json:"to"`
-	ChatId    string `json:"-"`
-	CreatedAt string `json:"-"`
+	Id        string `json:"-" msgpack:"Id"`
+	Text      string `json:"text" msgpack:"Text"`
+	FromUser  string `json:"from" msgpack:"FromUser"`
+	ToUser    string `json:"to" msgpack:"ToUser"`
+	ChatId    string `json:"-" msgpack:"ChatId"`
+	CreatedAt string `json:"-" msgpack:"CreatedAt"`
+	IsRead    bool   `json:"-" msgpack:"IsRead"`
 }
 
 type Chat struct {

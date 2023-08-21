@@ -15,6 +15,7 @@ func NewRouter(i *handler.Instance) http.Handler {
 
 		r.Get("/dialog/{user_id}/list", i.GetMessages)
 		r.Post("/dialog/{user_id}/send", i.SendMessage)
+		r.Put("/dialog/{user_id}/list/{messageId}", i.MarkAsRead)
 	})
 
 	return r
