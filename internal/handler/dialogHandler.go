@@ -1,17 +1,25 @@
 package handler
 
 import (
+	"Social-Net-Dialogs/internal/metrics"
 	"Social-Net-Dialogs/models"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/gofrs/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 	"log"
 	"net/http"
 	"time"
+)
+
+var (
+	sendMessageTimer = prometheus.NewTimer(metrics.SendMessage)
+	getMessageTimer  = prometheus.NewTimer(metrics.GetMessage)
+	markAsReadTimer  = prometheus.NewTimer(metrics.MarkAsRead)
 )
 
 func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +55,7 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 	go i.countersPublisher.SendMessageInfo(context.Background(), userSessionDTO)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	sendMessageTimer.ObserveDuration()
 }
 
 func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +88,7 @@ func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
 	msgDTO, _ := json.Marshal(msg)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(msgDTO)
+	getMessageTimer.ObserveDuration()
 }
 
 func (i *Instance) MarkAsRead(w http.ResponseWriter, r *http.Request) {
@@ -116,4 +126,5 @@ func (i *Instance) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	go i.countersPublisher.SendMessageInfo(context.Background(), msgToKafka)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(msgDTO)
+	markAsReadTimer.ObserveDuration()
 }

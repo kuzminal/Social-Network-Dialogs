@@ -4,6 +4,7 @@ import (
 	"Social-Net-Dialogs/internal/counters"
 	"Social-Net-Dialogs/internal/handler"
 	"Social-Net-Dialogs/internal/helper"
+	"Social-Net-Dialogs/internal/metrics"
 	"Social-Net-Dialogs/internal/router"
 	"Social-Net-Dialogs/internal/service"
 	"Social-Net-Dialogs/internal/session"
@@ -13,6 +14,7 @@ import (
 	"Social-Net-Dialogs/models"
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net/http"
 )
@@ -25,6 +27,10 @@ var (
 func main() {
 	initDb()
 	initTarantoolDb()
+
+	//metrics
+	prometheus.MustRegister(metrics.SendMessage, metrics.GetMessage, metrics.MarkAsRead)
+
 	traceServer := helper.GetEnvValue("TRACE_SERVER", "trace")
 	tracePort := helper.GetEnvValue("TRACE_PORT", "14268")
 	tracer, err := tracing.TracerProvider(fmt.Sprintf("http://%s:%s/api/traces", traceServer, tracePort))
