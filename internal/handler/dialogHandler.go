@@ -16,13 +16,8 @@ import (
 	"time"
 )
 
-var (
-	sendMessageTimer = prometheus.NewTimer(metrics.SendMessage)
-	getMessageTimer  = prometheus.NewTimer(metrics.GetMessage)
-	markAsReadTimer  = prometheus.NewTimer(metrics.MarkAsRead)
-)
-
 func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
+	sendMessageTimer := prometheus.NewTimer(metrics.SendMessage)
 	id := chi.URLParam(r, "user_id")
 	userId := r.Context().Value("userId").(string)
 	if len(userId) == 0 {
@@ -59,6 +54,7 @@ func (i *Instance) SendMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
+	getMessageTimer := prometheus.NewTimer(metrics.GetMessage)
 	// Extract TraceID from header
 	md, _ := metadata.FromOutgoingContext(r.Context())
 	traceIdString := md["x-trace-id"][0]
@@ -92,6 +88,7 @@ func (i *Instance) GetMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *Instance) MarkAsRead(w http.ResponseWriter, r *http.Request) {
+	markAsReadTimer := prometheus.NewTimer(metrics.MarkAsRead)
 	// Extract TraceID from header
 	md, _ := metadata.FromOutgoingContext(r.Context())
 	traceIdString := md["x-trace-id"][0]
